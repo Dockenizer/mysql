@@ -8,20 +8,20 @@ fi
 
 
 chown -R mysql:mysql /var/lib/mysql
-mysql_install_db --user=root
+mysql_install_db
+
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-""}
+MYSQL_ROOT_LOGIN=${MYSQL_ROOT_LOGIN:-"root"}
 
 file=`mktemp`
 
-cat << EOF > $file
-USE mysql;
-FLUSH PRIVILEGES;
-UPDATE user SET Host="%" where Host="localhost" AND User="root";
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
+echo "USE mysql;
+      DELETE FROM mysql.user;" >> $file;
 
-DROP DATABASE test;
+echo "INSERT INTO mysql.user VALUES('','${MYSQL_ROOT_LOGIN}', PASSWORD('${MYSQL_ROOT_PASSWORD}'),'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y', 'Y', '', '', '', '', 0, 0, 0, 0, '', '', 'N', 'N', '', 0.000000);" >> $file;
 
-EOF
+echo "DROP DATABASE IF EXISTS test ;
+      FLUSH PRIVILEGES;" >> $file;
 
 /usr/bin/mysqld --bootstrap --verbose=0 < $file
 rm -f $file
